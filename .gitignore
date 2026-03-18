@@ -2,6 +2,8 @@
 .devenv*
 devenv.local.nix
 devenv.local.yaml
+.flake.nix.swp
+*swp
 
 # direnv
 .direnv
