@@ -5,7 +5,7 @@ _: {
       enable = true;
       settings.configuration = {
         default = true;
-        MD013 = false; # Line length
+        MD013 = false; # Line length rule disable
       };
     };
   };
