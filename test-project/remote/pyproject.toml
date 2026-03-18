@@ -1,0 +1,8 @@
+[project]
+name = "test-project-remote"
+version = "0.1.0"
+description = "A simple remote test project"
+dependencies = []
+
+[tool.uv]
+managed = true

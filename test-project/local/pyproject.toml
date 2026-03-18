@@ -1,0 +1,8 @@
+[project]
+name = "test-project-local"
+version = "0.1.0"
+description = "A simple test project"
+dependencies = []
+
+[tool.uv]
+managed = true
