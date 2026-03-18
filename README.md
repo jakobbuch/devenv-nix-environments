@@ -29,11 +29,11 @@ the desired module(s) in your `devenv.lib.mkShell`.
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     devenv.url = "github:cachix/devenv";
-    # Point this to your published repository URL
-    devenv-templates.url = "github:youruser/devenv-nix-environments";
+    # Development environments from this repository
+    devenv-modules.url = "github:jakobbuch/devenv-nix-environments";
   };
 
-  outputs = { self, nixpkgs, devenv, devenv-templates, ... } @ inputs:
+  outputs = { self, nixpkgs, devenv, devenv-modules, ... } @ inputs:
     let
       system = "x86_64-linux"; # Or your architecture
       pkgs = import nixpkgs { inherit system; };
@@ -42,9 +42,9 @@ the desired module(s) in your `devenv.lib.mkShell`.
       devShells.${system} = devenv.lib.mkShell {
         inherit inputs pkgs;
         modules = [
-          devenv-templates.devenvModules.python
-          devenv-templates.devenvModules.git-hooks
-          devenv-templates.devenvModules.python-hooks
+          devenv-modules.devenvModules.python
+          devenv-modules.devenvModules.git-hooks
+          devenv-modules.devenvModules.python-hooks
         ];
       };
     };
@@ -96,7 +96,18 @@ devenv shell
 
 ### Remote Testing
 
-Fetches the modules from GitHub (useful for verifying the published flake):
+Fetches the modules from GitHub to verify the published flake:
+
+```bash
+cd test-project/remote
+devenv shell
+```
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE)
+file for details.
+
 
 ```bash
 cd test-project/remote

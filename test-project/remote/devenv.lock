@@ -978,14 +978,18 @@
         "nixpkgs": "nixpkgs_6"
       },
       "locked": {
-        "path": "../..",
-        "type": "path"
+        "lastModified": 1773831570,
+        "narHash": "sha256-Y/oAu8/YFwklGsH0OyyAAlU4eHY6iItR2Ctq5gDJkiQ=",
+        "owner": "jakobbuch",
+        "repo": "devenv-nix-environments",
+        "rev": "024defc00673a5a2ce041f35243cfd8bc81f03fa",
+        "type": "github"
       },
       "original": {
-        "path": "../..",
-        "type": "path"
-      },
-      "parent": []
+        "owner": "jakobbuch",
+        "repo": "devenv-nix-environments",
+        "type": "github"
+      }
     },
     "treefmt-nix": {
       "inputs": {
