@@ -2,8 +2,14 @@
 {
   imports = [
     inputs.templates.devenvModules.python
+    inputs.templates.devenvModules.latex
     inputs.templates.devenvModules.nix
+    inputs.templates.devenvModules.markdown
+    inputs.templates.devenvModules.bifrost
     inputs.templates.devenvModules.git-hooks
+    inputs.templates.devenvModules.nix-hooks
+    inputs.templates.devenvModules.python-hooks
+    inputs.templates.devenvModules.markdown-hooks
   ];
 
   enterShell = ''
