@@ -978,11 +978,11 @@
         "nixpkgs": "nixpkgs_6"
       },
       "locked": {
-        "lastModified": 1773831570,
-        "narHash": "sha256-Y/oAu8/YFwklGsH0OyyAAlU4eHY6iItR2Ctq5gDJkiQ=",
+        "lastModified": 1773834296,
+        "narHash": "sha256-FZtwidUL//McRms5ZrZuQfYlY9/Wa8/mCh9FQwUEi6k=",
         "owner": "jakobbuch",
         "repo": "devenv-nix-environments",
-        "rev": "024defc00673a5a2ce041f35243cfd8bc81f03fa",
+        "rev": "e11c45baa3f6c5563e99f988e12c33d190914dcf",
         "type": "github"
       },
       "original": {
