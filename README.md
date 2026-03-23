@@ -19,35 +19,26 @@ The following modules are available under the `devenvModules` output:
 
 ## How to use
 
-In your project's `flake.nix`, add this repository as an input and include
-the desired module(s) in your `devenv.lib.mkShell`.
+In your project's `devenv.yaml`, add this repository as an input. Then, import
+the desired module(s) in your `devenv.nix`.
 
-### Example `flake.nix`
+### Example `devenv.yaml`
+
+```yaml
+inputs:
+  devenv-modules:
+    url: github:jakobbuch/devenv-nix-environments
+```
+
+### Example `devenv.nix`
 
 ```nix
-{
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    devenv.url = "github:cachix/devenv";
-    # Development environments from this repository
-    devenv-modules.url = "github:jakobbuch/devenv-nix-environments";
-  };
-
-  outputs = { self, nixpkgs, devenv, devenv-modules, ... } @ inputs:
-    let
-      system = "x86_64-linux"; # Or your architecture
-      pkgs = import nixpkgs { inherit system; };
-    in
-    {
-      devShells.${system} = devenv.lib.mkShell {
-        inherit inputs pkgs;
-        modules = [
-          devenv-modules.devenvModules.python
-          devenv-modules.devenvModules.git-hooks
-          devenv-modules.devenvModules.python-hooks
-        ];
-      };
-    };
+{ inputs, ... }: {
+  imports = [
+    inputs.devenv-modules.devenvModules.python
+    inputs.devenv-modules.devenvModules.git-hooks
+    inputs.devenv-modules.devenvModules.python-hooks
+  ];
 }
 ```
 
