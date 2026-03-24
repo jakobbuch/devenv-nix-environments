@@ -18,7 +18,6 @@ in
 {
   # https://devenv.sh/reference/options/#cachix
   cachix.enable = true;
-  cachix.pull = [ "pre-commit-hooks" ];
 
   # https://devenv.sh/basics/
   env = {
