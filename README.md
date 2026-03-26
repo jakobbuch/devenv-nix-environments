@@ -13,9 +13,9 @@ The following modules are available under the `devenvModules` output:
 - **markdown**: Markdown editing tools.
 - **bifrost**: Environment for the Bifrost project.
 - **git-hooks**: Base git-hooks configuration.
-- **python-hooks**: Python-specific pre-commit hooks (ruff).
-- **nix-hooks**: Nix-specific pre-commit hooks (nixfmt).
-- **markdown-hooks**: Markdown-specific pre-commit hooks (markdownlint).
+- **python-hooks**: Python-specific pre-commit (prek) hooks (ruff).
+- **nix-hooks**: Nix-specific pre-commit (prek) hooks (nixfmt).
+- **markdown-hooks**: Markdown-specific pre-commit (prek) hooks (markdownlint).
 
 ## How to use
 

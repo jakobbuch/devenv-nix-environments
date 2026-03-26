@@ -3,6 +3,7 @@ _: {
   git-hooks.hooks = {
     markdownlint = {
       enable = true;
+      args = [ "--fix" ];
       settings.configuration = {
         default = true;
         MD013 = false; # Line length rule disable
