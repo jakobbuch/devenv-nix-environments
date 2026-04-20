@@ -7,6 +7,7 @@ _: {
       settings.configuration = {
         default = true;
         MD013 = false; # Line length rule disable
+        MD036 = false; # Emphasis used instead of a header
       };
     };
   };
