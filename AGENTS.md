@@ -27,7 +27,16 @@ This repository contains reusable `devenv` shell modules exported as Nix Flake o
 
 - **NEVER** use `git commit --no-verify` - hooks are mandatory
 - **NEVER** use `git reset --hard` - use `git restore` instead
+- **NEVER** use `git stash` on changes you want to keep - commit first instead
 - If hooks modify files (formatters), add changes with `git add -A` and commit again
+- If pre-commit returns exit code 1 despite passing checks (migration mode bug):
+
+  ```bash
+  rm .git/hooks/pre-commit
+  devenv shell <<< 'prek install --overwrite'
+  ```
+
+- After committing, always verify: `git log --oneline -1` and `git status`
 - Recovery: `git restore --staged <file>` to unstage, then re-commit properly
 
 ## Best Practices for Adding Modules
