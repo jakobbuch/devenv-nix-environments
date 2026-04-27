@@ -46,6 +46,7 @@
         nix-hooks = ./devenv/nix-hooks-dev.nix;
         python-hooks = ./devenv/python-hooks-dev.nix;
         markdown-hooks = ./devenv/markdown-hooks-dev.nix;
+        local-hooks = ./devenv/local-hooks-dev.nix;
       };
 
       devShells = forAllSystems (

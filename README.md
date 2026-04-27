@@ -16,6 +16,7 @@ The following modules are available under the `devenvModules` output:
 - **python-hooks**: Python-specific pre-commit (prek) hooks (ruff).
 - **nix-hooks**: Nix-specific pre-commit (prek) hooks (nixfmt).
 - **markdown-hooks**: Markdown-specific pre-commit (prek) hooks (markdownlint).
+- **local-hooks**: Auto-installs git hooks via pre-commit in local repositories (fail-safe).
 
 ## How to use
 
@@ -71,6 +72,30 @@ When using the `python` module, dependencies are managed via `uv`.
   ```bash
   uvUpdate
   ```
+
+### Local Hooks (`local-hooks`)
+
+The `local-hooks` module automatically installs git hooks via pre-commit when
+entering a shell in a git repository.
+
+**Features:**
+
+- Auto-detects git repositories (`.git` directory)
+- Only runs if `.pre-commit-config.yaml` exists
+- Fail-safe: gracefully skips if `uv` or pre-commit not yet available
+- Provides `installLocalHooks` script for manual installation
+
+**Usage:**
+
+```nix
+imports = [
+  inputs.devenv-modules.devenvModules.local-hooks
+];
+```
+
+**Note:** For best results, combine with the `python` module which provides `uv`.
+The module includes `pre-commit` as a package and will attempt to run it via
+`uv run pre-commit` if available, falling back to a global installation.
 
 ## Testing
 

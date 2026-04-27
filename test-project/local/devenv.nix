@@ -10,6 +10,7 @@
     inputs.templates.devenvModules.nix-hooks
     inputs.templates.devenvModules.python-hooks
     inputs.templates.devenvModules.markdown-hooks
+    inputs.templates.devenvModules.local-hooks
   ];
 
   enterShell = ''
