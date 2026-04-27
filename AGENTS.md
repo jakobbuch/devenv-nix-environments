@@ -23,6 +23,13 @@ This repository contains reusable `devenv` shell modules exported as Nix Flake o
   - Before suggesting a bump, run extensive tests by verifying the environments (e.g., using `test-project/` or running scripts in the modules).
   - Assist the user in drafting commit messages that match the project's grouping in `cliff.toml`.
 
+## Git & Pre-commit Hooks
+
+- **NEVER** use `git commit --no-verify` - hooks are mandatory
+- **NEVER** use `git reset --hard` - use `git restore` instead
+- If hooks modify files (formatters), add changes with `git add -A` and commit again
+- Recovery: `git restore --staged <file>` to unstage, then re-commit properly
+
 ## Best Practices for Adding Modules
 
 1. Define the module in `devenv/<name>-dev.nix`.
