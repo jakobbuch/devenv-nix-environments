@@ -52,6 +52,8 @@ in
     libraries = buildPackages;
   };
 
+  dotenv.enable = true;
+
   # https://devenv.sh/scripts/
   scripts = {
     helloDevenv.exec = "echo hello from $GREET";
