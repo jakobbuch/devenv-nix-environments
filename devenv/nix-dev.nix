@@ -6,7 +6,7 @@
   # https://devenv.sh/packages/
   packages = with pkgs; [
     nil
-    nixfmt-rfc-style
+    nixfmt
     statix
     git
     gh
