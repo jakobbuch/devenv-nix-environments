@@ -2,24 +2,32 @@
 
 This test project verifies the `claude-md-sync-hooks` module functionality.
 
+## Architecture
+
+```
+AGENTS.md  = SOURCE FILE (edited by OpenCode users)
+   ↑
+   └── CLAUDE.md (symlink → AGENTS.md, for Claude users)
+```
+
+**Key principle:** `AGENTS.md` is always the regular file. `CLAUDE.md` is always a symlink.
+
 ## What it Tests
 
-1. **Root level sync**: `CLAUDE.md` → `AGENTS.md` symlink at repository root
-2. **Subdirectory sync**: `subdir/CLAUDE.md` → `subdir/AGENTS.md` symlink
-3. **Content accessibility**: Verify content is readable through symlinks
-4. **File protection**: Existing non-symlink `AGENTS.md` files are not overwritten
-5. **Pre-commit hook**: Verify `prek run -a` executes the sync hook successfully
+1. **Create from scratch**: No files → Creates `AGENTS.md` (template) + `CLAUDE.md` symlink
+2. **CLAUDE.md exists**: Converts to `AGENTS.md` + symlink (preserves content)
+3. **AGENTS.md exists**: Creates `CLAUDE.md` symlink
+4. **Subdirectory support**: Works in nested directories
+5. **Pre-commit hook**: `prek run -a` executes sync correctly
 
 ## How to Run
 
-### Run Full Test Suite (Recommended)
+### Run Full Test Suite
 
 ```bash
 cd test-project/claude-md-sync
 devenv shell ./test-sync.sh
 ```
-
-This runs all tests including the pre-commit hook verification.
 
 ### Manual Verification
 
@@ -27,35 +35,24 @@ This runs all tests including the pre-commit hook verification.
 cd test-project/claude-md-sync
 devenv shell
 
-# Create test CLAUDE.md files
-echo "# Test" > CLAUDE.md
-mkdir -p subdir
-echo "# Subdir Test" > subdir/CLAUDE.md
-git add .
+# Test 1: Create from scratch
+rm -f CLAUDE.md AGENTS.md
+bash ../../scripts/sync-claude-md.sh .
+ls -la  # AGENTS.md (file), CLAUDE.md -> AGENTS.md (symlink)
 
-# Run sync (automatic in enterShell, or manual)
-syncClaudeMd
-
-# Verify symlinks
-ls -la AGENTS.md subdir/AGENTS.md
-cat AGENTS.md
-cat subdir/AGENTS.md
+# Test 2: Convert CLAUDE.md to AGENTS.md
+rm -f CLAUDE.md AGENTS.md
+echo "# My content" > CLAUDE.md
+bash ../../scripts/sync-claude-md.sh .
+ls -la  # AGENTS.md (file with content), CLAUDE.md -> AGENTS.md
 
 # Test pre-commit hook
 prek run -a
 ```
 
-## Expected Behavior
-
-- `AGENTS.md` should be a symlink to `CLAUDE.md`
-- `subdir/AGENTS.md` should be a symlink to `subdir/CLAUDE.md`
-- Content should be accessible through both paths
-- Pre-commit hook (`prek run -a`) should execute successfully
-- Existing non-symlink `AGENTS.md` files should be preserved
-
 ## Standalone Script for Non-Nix Users
 
-A standalone script is available at `scripts/sync-claude-md.sh` in the root of this repository.
+**Location:** `scripts/sync-claude-md.sh`
 
 **Usage:**
 
@@ -66,29 +63,23 @@ cp /path/to/devenv-nix-environments/scripts/sync-claude-md.sh /your/project/
 # Run manually before committing
 ./sync-claude-md.sh
 
-# Or add to your pre-commit config
-# .pre-commit-config.yaml:
-# - repo: local
-#   hooks:
-#     - id: sync-claude-md
-#       name: Sync CLAUDE.md to AGENTS.md
-#       entry: ./sync-claude-md.sh
-#       language: script
-#       pass_filenames: false
+# Or specify a different repository
+./sync-claude-md.sh /path/to/repo
 ```
 
-## Cleanup
+**Add to your `.pre-commit-config.yaml`:**
 
-The test script automatically cleans up test artifacts. To manually clean:
-
-```bash
-rm -f CLAUDE.md AGENTS.md
-rm -rf subdir
+```yaml
+- repo: local
+  hooks:
+    - id: sync-claude-md
+      name: Sync CLAUDE.md to AGENTS.md
+      entry: ./sync-claude-md.sh
+      language: script
+      pass_filenames: false
 ```
 
 ## Module Usage
-
-To use the `claude-md-sync-hooks` module in your project:
 
 ```nix
 # devenv.nix
@@ -99,8 +90,19 @@ To use the `claude-md-sync-hooks` module in your project:
 }
 ```
 
-This provides:
-
-- `syncClaudeMd` script (or `sync-claude-md.sh` from scripts/)
+**Provides:**
+- Pre-commit hook that syncs before every commit
 - Automatic sync on shell entry
-- Pre-commit hook that runs before every commit
+- `sync-claude-md.sh` script in `scripts/`
+
+## Workflow
+
+**OpenCode users:**
+1. Edit `AGENTS.md` directly
+2. Changes automatically visible via `CLAUDE.md` symlink
+
+**Claude users:**
+1. Edit `CLAUDE.md` (which writes to `AGENTS.md`)
+2. OpenCode users see changes in `AGENTS.md`
+
+**Both see the same content!**

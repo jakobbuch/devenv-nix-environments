@@ -15,83 +15,94 @@ rm -f CLAUDE.md AGENTS.md
 rm -rf subdir
 mkdir -p subdir
 
-# Test 1: Create CLAUDE.md from scratch when neither exists
-echo "📝 Test 1: Create CLAUDE.md when neither file exists"
+# Test 1: Create AGENTS.md from scratch when neither exists
+echo "📝 Test 1: Create AGENTS.md when neither file exists"
 git clean -fd . 2>/dev/null || true
 
 echo "  Running sync-claude-md.sh..."
 bash ../../scripts/sync-claude-md.sh .
 
-if [ -f "CLAUDE.md" ] && [ ! -L "CLAUDE.md" ]; then
-  echo "  ✅ CLAUDE.md created"
+if [ -f "AGENTS.md" ] && [ ! -L "AGENTS.md" ]; then
+  echo "  ✅ AGENTS.md created as regular file"
 else
-  echo "  ❌ CLAUDE.md not created or is symlink"
+  echo "  ❌ AGENTS.md not created or is symlink"
   exit 1
 fi
 
-if [ -L "AGENTS.md" ]; then
-  target=$(readlink "AGENTS.md")
-  if [ "$target" = "CLAUDE.md" ]; then
-    echo "  ✅ AGENTS.md -> CLAUDE.md symlink created"
+if [ -L "CLAUDE.md" ]; then
+  target=$(readlink "CLAUDE.md")
+  if [ "$target" = "AGENTS.md" ]; then
+    echo "  ✅ CLAUDE.md -> AGENTS.md symlink created"
   else
-    echo "  ❌ AGENTS.md points to wrong target: $target"
+    echo "  ❌ CLAUDE.md points to wrong target: $target"
     exit 1
   fi
 else
-  echo "  ❌ AGENTS.md symlink not created"
+  echo "  ❌ CLAUDE.md symlink not created"
   exit 1
 fi
 
-# Test 2: AGENTS.md exists, CLAUDE.md doesn't - should create CLAUDE.md from AGENTS.md
+# Test 2: CLAUDE.md exists as file, should convert to AGENTS.md + symlink
 echo ""
-echo "📝 Test 2: Create CLAUDE.md from existing AGENTS.md"
+echo "📝 Test 2: CLAUDE.md exists - convert to AGENTS.md + symlink"
 rm -f CLAUDE.md AGENTS.md
-echo "# Existing AGENTS.md content" > AGENTS.md
-git add AGENTS.md
+echo "# Original CLAUDE.md content" > CLAUDE.md
 
 echo "  Running sync-claude-md.sh..."
 bash ../../scripts/sync-claude-md.sh .
 
-if [ -f "CLAUDE.md" ]; then
-  content=$(cat CLAUDE.md)
-  if [ "$content" = "# Existing AGENTS.md content" ]; then
-    echo "  ✅ CLAUDE.md created from AGENTS.md content"
+if [ -f "AGENTS.md" ] && [ ! -L "AGENTS.md" ]; then
+  content=$(cat AGENTS.md)
+  if [ "$content" = "# Original CLAUDE.md content" ]; then
+    echo "  ✅ AGENTS.md created from CLAUDE.md content"
   else
-    echo "  ❌ CLAUDE.md content mismatch"
+    echo "  ❌ AGENTS.md content mismatch"
     exit 1
   fi
 else
-  echo "  ❌ CLAUDE.md not created"
+  echo "  ❌ AGENTS.md not created as regular file"
   exit 1
 fi
 
-if [ -L "AGENTS.md" ]; then
-  echo "  ✅ AGENTS.md is now symlink to CLAUDE.md"
+if [ -L "CLAUDE.md" ]; then
+  target=$(readlink "CLAUDE.md")
+  if [ "$target" = "AGENTS.md" ]; then
+    echo "  ✅ CLAUDE.md -> AGENTS.md symlink created"
+  else
+    echo "  ❌ CLAUDE.md points to wrong target: $target"
+    exit 1
+  fi
 else
-  echo "  ❌ AGENTS.md is not symlink"
+  echo "  ❌ CLAUDE.md is not symlink"
   exit 1
 fi
 
-# Test 3: CLAUDE.md exists - should create AGENTS.md symlink
+# Test 3: AGENTS.md exists - should create CLAUDE.md symlink
 echo ""
-echo "📝 Test 3: CLAUDE.md exists - create AGENTS.md symlink"
-rm -f AGENTS.md
-echo "# CLAUDE.md content" > CLAUDE.md
-git add CLAUDE.md
+echo "📝 Test 3: AGENTS.md exists - create CLAUDE.md symlink"
+rm -f CLAUDE.md AGENTS.md
+echo "# AGENTS.md content" > AGENTS.md
 
 echo "  Running sync-claude-md.sh..."
 bash ../../scripts/sync-claude-md.sh .
 
-if [ -L "AGENTS.md" ]; then
-  target=$(readlink "AGENTS.md")
-  if [ "$target" = "CLAUDE.md" ]; then
-    echo "  ✅ AGENTS.md -> CLAUDE.md symlink created"
+if [ -f "AGENTS.md" ] && [ ! -L "AGENTS.md" ]; then
+  echo "  ✅ AGENTS.md remains regular file"
+else
+  echo "  ❌ AGENTS.md was converted to symlink"
+  exit 1
+fi
+
+if [ -L "CLAUDE.md" ]; then
+  target=$(readlink "CLAUDE.md")
+  if [ "$target" = "AGENTS.md" ]; then
+    echo "  ✅ CLAUDE.md -> AGENTS.md symlink created"
   else
     echo "  ❌ Wrong symlink target: $target"
     exit 1
   fi
 else
-  echo "  ❌ AGENTS.md symlink not created"
+  echo "  ❌ CLAUDE.md symlink not created"
   exit 1
 fi
 
@@ -99,22 +110,28 @@ fi
 echo ""
 echo "📝 Test 4: Subdirectory sync"
 mkdir -p subdir
-echo "# Subdir CLAUDE.md" > subdir/CLAUDE.md
-git add subdir/CLAUDE.md
+echo "# Subdir AGENTS.md" > subdir/AGENTS.md
 
 echo "  Running sync-claude-md.sh..."
 bash ../../scripts/sync-claude-md.sh .
 
-if [ -L "subdir/AGENTS.md" ]; then
-  target=$(readlink "subdir/AGENTS.md")
-  if [ "$target" = "CLAUDE.md" ]; then
-    echo "  ✅ subdir/AGENTS.md -> CLAUDE.md symlink created"
+if [ -L "subdir/CLAUDE.md" ]; then
+  target=$(readlink "subdir/CLAUDE.md")
+  if [ "$target" = "AGENTS.md" ]; then
+    echo "  ✅ subdir/CLAUDE.md -> AGENTS.md symlink created"
   else
     echo "  ❌ Wrong symlink target: $target"
     exit 1
   fi
 else
-  echo "  ❌ subdir/AGENTS.md symlink not created"
+  echo "  ❌ subdir/CLAUDE.md symlink not created"
+  exit 1
+fi
+
+if [ -f "subdir/AGENTS.md" ] && [ ! -L "subdir/AGENTS.md" ]; then
+  echo "  ✅ subdir/AGENTS.md remains regular file"
+else
+  echo "  ❌ subdir/AGENTS.md is symlink"
   exit 1
 fi
 
@@ -124,8 +141,7 @@ echo "📝 Test 5: Pre-commit hook (prek run -a)"
 rm -f CLAUDE.md AGENTS.md
 rm -rf subdir
 mkdir -p subdir
-echo "# Test content" > subdir/CLAUDE.md
-git add -A
+echo "# Subdir AGENTS.md" > subdir/AGENTS.md
 
 echo "  Running prek run -a..."
 if prek run -a; then
@@ -136,10 +152,23 @@ else
 fi
 
 # Verify symlinks after pre-commit
-if [ -L "subdir/AGENTS.md" ]; then
-  echo "  ✅ Symlinks intact after pre-commit"
+if [ -L "subdir/CLAUDE.md" ]; then
+  target=$(readlink "subdir/CLAUDE.md")
+  if [ "$target" = "AGENTS.md" ]; then
+    echo "  ✅ CLAUDE.md -> AGENTS.md symlink intact after pre-commit"
+  else
+    echo "  ❌ Wrong symlink target after pre-commit: $target"
+    exit 1
+  fi
 else
-  echo "  ❌ Symlinks broken after pre-commit"
+  echo "  ❌ CLAUDE.md symlink broken after pre-commit"
+  exit 1
+fi
+
+if [ -f "subdir/AGENTS.md" ] && [ ! -L "subdir/AGENTS.md" ]; then
+  echo "  ✅ AGENTS.md remains regular file after pre-commit"
+else
+  echo "  ❌ AGENTS.md became symlink after pre-commit"
   exit 1
 fi
 

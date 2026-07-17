@@ -3,10 +3,14 @@ set -euo pipefail
 
 # sync-claude-md.sh - Sync CLAUDE.md and AGENTS.md for Claude/OpenCode collaboration
 #
-# This script ensures CLAUDE.md and AGENTS.md point to the same content:
-# - If CLAUDE.md exists: creates AGENTS.md as symlink to it
-# - If AGENTS.md exists (but not CLAUDE.md): creates CLAUDE.md from it, then symlinks
-# - If neither exists: creates empty CLAUDE.md and symlinks AGENTS.md to it
+# AGENTS.md is the SOURCE file (for OpenCode users)
+# CLAUDE.md is a SYMLINK to AGENTS.md (for Claude users)
+#
+# This script ensures:
+# - AGENTS.md always exists as a regular file
+# - CLAUDE.md is always a symlink to AGENTS.md
+# - If only CLAUDE.md exists (as file), convert to AGENTS.md + symlink
+# - If neither exists, create AGENTS.md with default template + symlink
 #
 # Usage:
 #   ./sync-claude-md.sh              # Run in current directory
@@ -17,6 +21,9 @@ REPO_ROOT="${1:-$(pwd)}"
 cd "$REPO_ROOT"
 
 echo "🔄 Syncing CLAUDE.md and AGENTS.md for collaboration..."
+echo "   AGENTS.md = source file (OpenCode)"
+echo "   CLAUDE.md = symlink to AGENTS.md (Claude)"
+echo ""
 
 # Find all directories containing CLAUDE.md or AGENTS.md files (tracked or untracked)
 dirs_to_sync=()
@@ -45,16 +52,16 @@ if [ -f "AGENTS.md" ] && [[ ! " ${dirs_to_sync[*]} " =~ " . " ]]; then
   dirs_to_sync+=(".")
 fi
 
-# If no files found at all, create root-level CLAUDE.md
+# If no files found at all, create root-level AGENTS.md
 if [ ${#dirs_to_sync[@]} -eq 0 ]; then
   echo "📄 No CLAUDE.md or AGENTS.md files found. Creating root-level files..."
   
-  if [ ! -f "CLAUDE.md" ] && [ ! -f "AGENTS.md" ]; then
-    # Create default CLAUDE.md
-    cat > CLAUDE.md << 'TEMPLATE'
-# CLAUDE.md
+  if [ ! -f "AGENTS.md" ]; then
+    # Create default AGENTS.md
+    cat > AGENTS.md << 'TEMPLATE'
+# AGENTS.md
 
-Project guidelines and context for Claude AI assistant.
+Project guidelines and context for AI assistants (OpenCode, Claude, etc.).
 
 ## Project Overview
 
@@ -68,20 +75,27 @@ Project guidelines and context for Claude AI assistant.
 
 <!-- List key files and their purposes -->
 TEMPLATE
-    echo "  ✅ Created: CLAUDE.md (default template)"
-  elif [ -f "AGENTS.md" ] && [ ! -f "CLAUDE.md" ]; then
-    # AGENTS.md exists, use it as source
-    cp "AGENTS.md" "CLAUDE.md"
-    echo "  ✅ Created: CLAUDE.md (from AGENTS.md)"
+    echo "  ✅ Created: AGENTS.md (default template)"
   fi
   
-  # Create symlink
-  if [ -f "AGENTS.md" ] && [ ! -L "AGENTS.md" ]; then
-    rm "AGENTS.md"
-  fi
-  if [ ! -L "AGENTS.md" ]; then
-    ln -s "CLAUDE.md" "AGENTS.md"
-    echo "  ✅ Created: AGENTS.md -> CLAUDE.md"
+  # Create CLAUDE.md symlink to AGENTS.md
+  if [ -L "CLAUDE.md" ]; then
+    target=$(readlink "CLAUDE.md")
+    if [ "$target" != "AGENTS.md" ]; then
+      rm "CLAUDE.md"
+      ln -s "AGENTS.md" "CLAUDE.md"
+      echo "  ✅ Fixed: CLAUDE.md -> AGENTS.md"
+    else
+      echo "  ✅ CLAUDE.md -> AGENTS.md (already correct)"
+    fi
+  elif [ -f "CLAUDE.md" ]; then
+    # CLAUDE.md is a regular file, replace with symlink
+    rm "CLAUDE.md"
+    ln -s "AGENTS.md" "CLAUDE.md"
+    echo "  ✅ Replaced: CLAUDE.md -> AGENTS.md"
+  else
+    ln -s "AGENTS.md" "CLAUDE.md"
+    echo "  ✅ Created: CLAUDE.md -> AGENTS.md"
   fi
   
   echo "✅ Sync complete!"
@@ -96,51 +110,68 @@ for dir in "${dirs_to_sync[@]}"; do
   
   echo "  Processing: $dir"
   
-  # Case 1: CLAUDE.md exists as regular file
-  if [ -f "$claude_file" ] && [ ! -L "$claude_file" ]; then
-    if [ -L "$agents_file" ]; then
-      # Already symlinked correctly
-      echo "    ✅ AGENTS.md -> CLAUDE.md (already synced)"
-    elif [ -f "$agents_file" ]; then
-      # AGENTS.md is regular file, replace with symlink
-      rm "$agents_file"
-      ln -s "CLAUDE.md" "$agents_file"
-      echo "    ✅ Replaced: AGENTS.md -> CLAUDE.md"
+  # Case 1: AGENTS.md exists as regular file (correct state)
+  if [ -f "$agents_file" ] && [ ! -L "$agents_file" ]; then
+    if [ -L "$claude_file" ]; then
+      target=$(readlink "$claude_file")
+      if [ "$target" = "AGENTS.md" ]; then
+        echo "    ✅ CLAUDE.md -> AGENTS.md (already synced)"
+      else
+        rm "$claude_file"
+        ln -s "AGENTS.md" "$claude_file"
+        echo "    ✅ Fixed: CLAUDE.md -> AGENTS.md"
+      fi
+    elif [ -f "$claude_file" ]; then
+      # CLAUDE.md is regular file, replace with symlink
+      rm "$claude_file"
+      ln -s "AGENTS.md" "$claude_file"
+      echo "    ✅ Replaced: CLAUDE.md -> AGENTS.md"
     else
-      # AGENTS.md doesn't exist
-      ln -s "CLAUDE.md" "$agents_file"
-      echo "    ✅ Created: AGENTS.md -> CLAUDE.md"
+      # CLAUDE.md doesn't exist
+      ln -s "AGENTS.md" "$claude_file"
+      echo "    ✅ Created: CLAUDE.md -> AGENTS.md"
     fi
   fi
   
-  # Case 2: AGENTS.md exists as regular file, CLAUDE.md doesn't exist
-  if [ -f "$agents_file" ] && [ ! -L "$agents_file" ] && [ ! -e "$claude_file" ]; then
-    # Copy AGENTS.md content to CLAUDE.md
-    cp "$agents_file" "$claude_file"
-    echo "    ✅ Created: CLAUDE.md (from AGENTS.md)"
+  # Case 2: CLAUDE.md exists as regular file, AGENTS.md doesn't exist
+  if [ -f "$claude_file" ] && [ ! -L "$claude_file" ] && [ ! -e "$agents_file" ]; then
+    # Move CLAUDE.md content to AGENTS.md
+    mv "$claude_file" "$agents_file"
+    echo "    ✅ Created: AGENTS.md (from CLAUDE.md)"
     
-    # Replace AGENTS.md with symlink
-    rm "$agents_file"
-    ln -s "CLAUDE.md" "$agents_file"
-    echo "    ✅ Replaced: AGENTS.md -> CLAUDE.md"
+    # Create CLAUDE.md symlink
+    ln -s "AGENTS.md" "$claude_file"
+    echo "    ✅ Created: CLAUDE.md -> AGENTS.md"
   fi
   
-  # Case 3: Both are symlinks (already synced)
-  if [ -L "$claude_file" ] && [ -L "$agents_file" ]; then
-    echo "    ✅ Both are symlinks (already synced)"
-  fi
-  
-  # Case 4: CLAUDE.md is symlink to AGENTS.md (reverse sync)
+  # Case 3: CLAUDE.md is symlink to wrong target
   if [ -L "$claude_file" ]; then
     target=$(readlink "$claude_file")
-    if [ "$target" = "AGENTS.md" ]; then
-      # Reverse the symlink: make AGENTS.md -> CLAUDE.md instead
+    if [ "$target" != "AGENTS.md" ]; then
       rm "$claude_file"
-      cp "$agents_file" "CLAUDE.md.tmp"
-      mv "CLAUDE.md.tmp" "$claude_file"
+      ln -s "AGENTS.md" "$claude_file"
+      echo "    ✅ Fixed: CLAUDE.md -> AGENTS.md (was -> $target)"
+    fi
+  fi
+  
+  # Case 4: AGENTS.md is symlink (wrong! should be regular file)
+  if [ -L "$agents_file" ]; then
+    target=$(readlink "$agents_file")
+    if [ -f "$dir/$target" ]; then
+      # Replace AGENTS.md symlink with actual file
+      cp "$dir/$target" "$agents_file.tmp"
       rm "$agents_file"
-      ln -s "CLAUDE.md" "$agents_file"
-      echo "    ✅ Fixed: AGENTS.md -> CLAUDE.md (was reversed)"
+      mv "$agents_file.tmp" "$agents_file"
+      echo "    ✅ Converted: AGENTS.md (was symlink, now file)"
+      
+      # Fix CLAUDE.md symlink
+      if [ -L "$claude_file" ]; then
+        rm "$claude_file"
+      elif [ -f "$claude_file" ]; then
+        rm "$claude_file"
+      fi
+      ln -s "AGENTS.md" "$claude_file"
+      echo "    ✅ Fixed: CLAUDE.md -> AGENTS.md"
     fi
   fi
 done
