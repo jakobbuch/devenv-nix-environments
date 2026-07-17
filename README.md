@@ -156,3 +156,45 @@ cp scripts/sync-claude-md.sh /your/project/
 ```
 
 This enables Claude/OpenCode collaboration in any Git project, regardless of build system.
+
+## CLAUDE.md Sync Module
+
+The `claude-md-sync-hooks` module enables seamless collaboration between Claude and OpenCode users.
+
+### Architecture
+
+```
+AGENTS.md  = SOURCE FILE (edited by OpenCode users)
+   ↑
+   └── CLAUDE.md (symlink → AGENTS.md, for Claude users)
+```
+
+**Key principle:** `AGENTS.md` is always the regular file. `CLAUDE.md` is always a symlink.
+
+### Usage
+
+```nix
+# devenv.nix
+{ inputs, ... }: {
+  imports = [
+    inputs.devenv-modules.devenvModules.claude-md-sync-hooks
+  ];
+}
+```
+
+**Features:**
+- Pre-commit hook syncs before every commit
+- Automatic sync on shell entry
+- Creates `AGENTS.md` if missing (with default template)
+- Converts existing `CLAUDE.md` files to `AGENTS.md` + symlink
+
+### Standalone Script
+
+For non-Nix projects, use the standalone script:
+
+```bash
+cp scripts/sync-claude-md.sh /your/project/
+./sync-claude-md.sh
+```
+
+See `test-project/claude-md-sync/README.md` for details.
