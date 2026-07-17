@@ -7,6 +7,7 @@
     ./devenv/git-hooks-dev.nix
     ./devenv/markdown-dev.nix
     ./devenv/markdown-hooks-dev.nix
+    ./devenv/claude-md-sync-hooks-dev.nix
   ];
 
   # Additional repository-specific configuration

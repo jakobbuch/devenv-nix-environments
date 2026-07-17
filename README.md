@@ -17,6 +17,7 @@ The following modules are available under the `devenvModules` output:
 - **nix-hooks**: Nix-specific pre-commit (prek) hooks (nixfmt).
 - **markdown-hooks**: Markdown-specific pre-commit (prek) hooks (markdownlint).
 - **local-hooks**: Auto-installs git hooks via pre-commit in local repositories (fail-safe).
+- **claude-md-sync-hooks**: Syncs CLAUDE.md files to AGENTS.md via symlinks for Claude/OpenCode collaboration.
 
 ## How to use
 

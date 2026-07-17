@@ -47,6 +47,7 @@
         python-hooks = ./devenv/python-hooks-dev.nix;
         markdown-hooks = ./devenv/markdown-hooks-dev.nix;
         local-hooks = ./devenv/local-hooks-dev.nix;
+        claude-md-sync-hooks = ./devenv/claude-md-sync-hooks-dev.nix;
       };
 
       devShells = forAllSystems (
