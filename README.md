@@ -138,3 +138,20 @@ file for details.
 cd test-project/remote
 devenv shell
 ```
+
+## Standalone Script
+
+The `scripts/sync-claude-md.sh` script can be used independently of Nix/devenv:
+
+```bash
+# Copy to your project
+cp scripts/sync-claude-md.sh /your/project/
+
+# Run manually
+./sync-claude-md.sh
+
+# Or specify a different repository
+./sync-claude-md.sh /path/to/repo
+```
+
+This enables Claude/OpenCode collaboration in any Git project, regardless of build system.
