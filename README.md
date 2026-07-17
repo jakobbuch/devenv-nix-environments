@@ -115,9 +115,18 @@ devenv shell
 
 Fetches the modules from GitHub to verify the published flake:
 
-```bash
 cd test-project/remote
 devenv shell
+```
+
+### CLAUDE.md Sync Hooks Testing
+
+Test the `claude-md-sync-hooks` module which syncs `CLAUDE.md` files to `AGENTS.md` via symlinks:
+
+```bash
+cd test-project/claude-md-sync
+devenv shell
+./test-sync.sh
 ```
 
 ## License

@@ -65,7 +65,7 @@ _: {
       # Custom hook to sync CLAUDE.md to AGENTS.md
       claude-md-sync = {
         enable = true;
-        entry = "$DEVENV_ROOT/.devenv/profile/bin/sync-claude-md";
+        entry = "$DEVENV_ROOT/.devenv/profile/bin/syncClaudeMd";
         language = "system";
         description = "Sync CLAUDE.md files to AGENTS.md";
         stages = [ "pre-commit" ];
@@ -79,7 +79,7 @@ _: {
     if [ -n "$DEVENV_ROOT" ] && [ -d "$DEVENV_ROOT/.git" ]; then
       echo ""
       echo "🔄 Running CLAUDE.md sync..."
-      sync-claude-md || true
+      syncClaudeMd || true
     fi
   '';
 }
