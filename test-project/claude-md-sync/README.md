@@ -100,6 +100,7 @@ To use the `claude-md-sync-hooks` module in your project:
 ```
 
 This provides:
+
 - `syncClaudeMd` script (or `sync-claude-md.sh` from scripts/)
 - Automatic sync on shell entry
 - Pre-commit hook that runs before every commit

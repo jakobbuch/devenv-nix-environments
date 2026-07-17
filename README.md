@@ -117,6 +117,7 @@ Fetches the modules from GitHub to verify the published flake:
 
 cd test-project/remote
 devenv shell
+
 ```
 
 ### CLAUDE.md Sync Hooks Testing
