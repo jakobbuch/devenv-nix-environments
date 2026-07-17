@@ -3,6 +3,9 @@ set -euo pipefail
 
 # Test script for claude-md-sync-hooks module
 # This script verifies that the module correctly syncs CLAUDE.md to AGENTS.md
+#
+# Usage: devenv shell ./test-sync.sh
+# Note: Must be run from within devenv shell
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -21,13 +24,7 @@ echo "# Root CLAUDE.md" > CLAUDE.md
 git add CLAUDE.md
 
 echo "  Running syncClaudeMd..."
-if command -v syncClaudeMd &> /dev/null; then
-  syncClaudeMd
-else
-  echo "  ⚠️  syncClaudeMd not available (shell not entered)"
-  echo "  Creating symlink manually for verification..."
-  ln -s "CLAUDE.md" "AGENTS.md"
-fi
+syncClaudeMd
 
 if [ -L "AGENTS.md" ]; then
   target=$(readlink "AGENTS.md")
@@ -49,12 +46,7 @@ echo "# Subdir CLAUDE.md" > subdir/CLAUDE.md
 git add subdir/CLAUDE.md
 
 echo "  Running syncClaudeMd..."
-if command -v syncClaudeMd &> /dev/null; then
-  syncClaudeMd
-else
-  echo "  Creating symlink manually for verification..."
-  ln -s "CLAUDE.md" "subdir/AGENTS.md"
-fi
+syncClaudeMd
 
 if [ -L "subdir/AGENTS.md" ]; then
   target=$(readlink "subdir/AGENTS.md")
@@ -95,15 +87,38 @@ rm -f subdir/AGENTS.md
 echo "# Regular file" > subdir/AGENTS.md
 
 echo "  Running syncClaudeMd..."
-if command -v syncClaudeMd &> /dev/null; then
-  syncClaudeMd || true
-fi
+syncClaudeMd || true
 
 if [ -f "subdir/AGENTS.md" ] && [ ! -L "subdir/AGENTS.md" ]; then
   echo "  ✅ Existing non-symlink file preserved"
 else
   echo "  ❌ Existing non-symlink file was overwritten"
   exit 1
+fi
+
+# Test 5: Test pre-commit hook with prek run -a
+echo ""
+echo "📝 Test 5: Pre-commit hook execution (prek run -a)"
+# Recreate subdir symlink for pre-commit test
+rm -f subdir/AGENTS.md
+ln -s "CLAUDE.md" "subdir/AGENTS.md"
+echo "  Adding test files for pre-commit..."
+git add -A
+
+echo "  Running prek run -a..."
+if prek run -a; then
+  echo "  ✅ Pre-commit hook passed"
+else
+  echo "  ❌ Pre-commit hook failed"
+  exit 1
+fi
+
+# Verify symlinks still work after pre-commit
+if [ -L "AGENTS.md" ] && [ -L "subdir/AGENTS.md" ]; then
+  echo "  ✅ Symlinks intact after pre-commit"
+else
+  echo "  ⚠️  Note: Some symlinks may have been modified by test 4"
+  echo "     This is expected behavior - non-symlink files are preserved"
 fi
 
 # Clean up

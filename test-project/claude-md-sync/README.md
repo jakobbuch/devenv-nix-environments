@@ -8,20 +8,20 @@ This test project verifies the `claude-md-sync-hooks` module functionality.
 2. **Subdirectory sync**: `subdir/CLAUDE.md` → `subdir/AGENTS.md` symlink
 3. **Content accessibility**: Verify content is readable through symlinks
 4. **File protection**: Existing non-symlink `AGENTS.md` files are not overwritten
+5. **Pre-commit hook**: Verify `prek run -a` executes the sync hook successfully
 
 ## How to Run
 
-### Option 1: Automated Test Script
+### Run Full Test Suite (Recommended)
 
 ```bash
 cd test-project/claude-md-sync
-devenv shell
-./test-sync.sh
+devenv shell ./test-sync.sh
 ```
 
-**Note**: Run from within the devenv shell to ensure the `syncClaudeMd` script is available.
+This runs all tests including the pre-commit hook verification.
 
-### Option 2: Manual Verification
+### Manual Verification
 
 ```bash
 cd test-project/claude-md-sync
@@ -33,13 +33,16 @@ mkdir -p subdir
 echo "# Subdir Test" > subdir/CLAUDE.md
 git add .
 
-# Run sync (automatic in enterShell)
+# Run sync (automatic in enterShell, or manual)
 syncClaudeMd
 
 # Verify symlinks
 ls -la AGENTS.md subdir/AGENTS.md
 cat AGENTS.md
 cat subdir/AGENTS.md
+
+# Test pre-commit hook
+prek run -a
 ```
 
 ## Expected Behavior
@@ -47,7 +50,32 @@ cat subdir/AGENTS.md
 - `AGENTS.md` should be a symlink to `CLAUDE.md`
 - `subdir/AGENTS.md` should be a symlink to `subdir/CLAUDE.md`
 - Content should be accessible through both paths
-- Pre-commit hook runs sync before commits (when in devenv shell)
+- Pre-commit hook (`prek run -a`) should execute successfully
+- Existing non-symlink `AGENTS.md` files should be preserved
+
+## Standalone Script for Non-Nix Users
+
+A standalone script is available at `scripts/sync-claude-md.sh` in the root of this repository.
+
+**Usage:**
+
+```bash
+# Copy to your project
+cp /path/to/devenv-nix-environments/scripts/sync-claude-md.sh /your/project/
+
+# Run manually before committing
+./sync-claude-md.sh
+
+# Or add to your pre-commit config
+# .pre-commit-config.yaml:
+# - repo: local
+#   hooks:
+#     - id: sync-claude-md
+#       name: Sync CLAUDE.md to AGENTS.md
+#       entry: ./sync-claude-md.sh
+#       language: script
+#       pass_filenames: false
+```
 
 ## Cleanup
 
@@ -58,8 +86,20 @@ rm -f CLAUDE.md AGENTS.md
 rm -rf subdir
 ```
 
-## Pre-commit Hook
+## Module Usage
 
-The module includes a pre-commit hook that automatically syncs CLAUDE.md files.
-**Important**: The hook only works when commits are made from within the devenv shell.
-For commits outside the shell, run `syncClaudeMd` manually before committing.
+To use the `claude-md-sync-hooks` module in your project:
+
+```nix
+# devenv.nix
+{ inputs, ... }: {
+  imports = [
+    inputs.devenv-modules.devenvModules.claude-md-sync-hooks
+  ];
+}
+```
+
+This provides:
+- `syncClaudeMd` script (or `sync-claude-md.sh` from scripts/)
+- Automatic sync on shell entry
+- Pre-commit hook that runs before every commit

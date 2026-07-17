@@ -6,7 +6,7 @@
 
   enterShell = ''
     echo "Test project for claude-md-sync-hooks module"
-    echo "Running sync-claude-md script..."
-    sync-claude-md
+    echo "Running syncClaudeMd script..."
+    syncClaudeMd
   '';
 }

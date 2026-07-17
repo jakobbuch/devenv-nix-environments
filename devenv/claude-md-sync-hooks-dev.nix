@@ -28,13 +28,13 @@ _: {
           # Get the directory containing the CLAUDE.md file
           dir=$(dirname "$claude_file")
           agents_file="$dir/AGENTS.md"
-          
+
           # Remove existing AGENTS.md if it's not a symlink
           if [ -e "$agents_file" ] && [ ! -L "$agents_file" ]; then
             echo "  ⚠️  Skipping $agents_file (exists but not a symlink)"
             continue
           fi
-          
+
           # Remove existing symlink if it points to wrong target
           if [ -L "$agents_file" ]; then
             current_target=$(readlink "$agents_file")
@@ -43,7 +43,7 @@ _: {
               rm "$agents_file"
             fi
           fi
-          
+
           # Create symlink if it doesn't exist
           if [ ! -L "$agents_file" ]; then
             ln -s "CLAUDE.md" "$agents_file"
@@ -65,7 +65,7 @@ _: {
       # Custom hook to sync CLAUDE.md to AGENTS.md
       claude-md-sync = {
         enable = true;
-        entry = "$DEVENV_ROOT/.devenv/profile/bin/syncClaudeMd";
+        entry = "syncClaudeMd";
         language = "system";
         description = "Sync CLAUDE.md files to AGENTS.md";
         stages = [ "pre-commit" ];
