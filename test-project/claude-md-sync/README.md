@@ -19,6 +19,8 @@ devenv shell
 ./test-sync.sh
 ```
 
+**Note**: Run from within the devenv shell to ensure the `syncClaudeMd` script is available.
+
 ### Option 2: Manual Verification
 
 ```bash
@@ -32,7 +34,7 @@ echo "# Subdir Test" > subdir/CLAUDE.md
 git add .
 
 # Run sync (automatic in enterShell)
-sync-claude-md
+syncClaudeMd
 
 # Verify symlinks
 ls -la AGENTS.md subdir/AGENTS.md
@@ -45,7 +47,7 @@ cat subdir/AGENTS.md
 - `AGENTS.md` should be a symlink to `CLAUDE.md`
 - `subdir/AGENTS.md` should be a symlink to `subdir/CLAUDE.md`
 - Content should be accessible through both paths
-- Pre-commit hook should run sync before commits
+- Pre-commit hook runs sync before commits (when in devenv shell)
 
 ## Cleanup
 
@@ -55,3 +57,9 @@ The test script automatically cleans up test artifacts. To manually clean:
 rm -f CLAUDE.md AGENTS.md
 rm -rf subdir
 ```
+
+## Pre-commit Hook
+
+The module includes a pre-commit hook that automatically syncs CLAUDE.md files.
+**Important**: The hook only works when commits are made from within the devenv shell.
+For commits outside the shell, run `syncClaudeMd` manually before committing.
