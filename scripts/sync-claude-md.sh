@@ -31,7 +31,7 @@ dirs_to_sync=()
 # Find directories with CLAUDE.md (tracked)
 while IFS= read -r file; do
   dir=$(dirname "$file")
-  if [[ ! " ${dirs_to_sync[*]} " =~ " ${dir} " ]]; then
+  if [[ ! " ${dirs_to_sync[*]} " =~ ${dir} ]]; then
     dirs_to_sync+=("$dir")
   fi
 done < <(git ls-files 2>/dev/null | grep -E '(^|/)CLAUDE\.md$' || true)
@@ -39,16 +39,16 @@ done < <(git ls-files 2>/dev/null | grep -E '(^|/)CLAUDE\.md$' || true)
 # Find directories with AGENTS.md (tracked)
 while IFS= read -r file; do
   dir=$(dirname "$file")
-  if [[ ! " ${dirs_to_sync[*]} " =~ " ${dir} " ]]; then
+  if [[ ! " ${dirs_to_sync[*]} " =~ ${dir} ]]; then
     dirs_to_sync+=("$dir")
   fi
 done < <(git ls-files 2>/dev/null | grep -E '(^|/)AGENTS\.md$' || true)
 
 # Also check for untracked files in root
-if [ -f "CLAUDE.md" ] && [[ ! " ${dirs_to_sync[*]} " =~ " . " ]]; then
+if [ -f "CLAUDE.md" ] && [[ ! " ${dirs_to_sync[*]} " =~ . ]]; then
   dirs_to_sync+=(".")
 fi
-if [ -f "AGENTS.md" ] && [[ ! " ${dirs_to_sync[*]} " =~ " . " ]]; then
+if [ -f "AGENTS.md" ] && [[ ! " ${dirs_to_sync[*]} " =~ . ]]; then
   dirs_to_sync+=(".")
 fi
 

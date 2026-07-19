@@ -118,7 +118,7 @@ Fetches the modules from GitHub to verify the published flake:
 cd test-project/remote
 devenv shell
 
-```
+```bash
 
 ### CLAUDE.md Sync Hooks Testing
 
@@ -163,7 +163,7 @@ The `claude-md-sync-hooks` module enables seamless collaboration between Claude 
 
 ### Architecture
 
-```
+```text
 AGENTS.md  = SOURCE FILE (edited by OpenCode users)
    ↑
    └── CLAUDE.md (symlink → AGENTS.md, for Claude users)
@@ -183,12 +183,13 @@ AGENTS.md  = SOURCE FILE (edited by OpenCode users)
 ```
 
 **Features:**
+
 - Pre-commit hook syncs before every commit
 - Automatic sync on shell entry
 - Creates `AGENTS.md` if missing (with default template)
 - Converts existing `CLAUDE.md` files to `AGENTS.md` + symlink
 
-### Standalone Script
+### Usage in Non-Nix Projects
 
 For non-Nix projects, use the standalone script:
 
