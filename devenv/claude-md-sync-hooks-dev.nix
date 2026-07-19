@@ -125,13 +125,4 @@ in
     };
   };
 
-  # Run sync when entering the shell
-  enterShell = ''
-    # Sync CLAUDE.md to AGENTS.md on shell entry
-    if [ -n "$DEVENV_ROOT" ] && [ -d "$DEVENV_ROOT/.git" ]; then
-      echo ""
-      echo "🔄 Running CLAUDE.md sync..."
-      syncClaudeMd || true
-    fi
-  '';
 }
