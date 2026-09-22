@@ -17,7 +17,7 @@ The following modules are available under the `devenvModules` output:
 - **nix-hooks**: Nix-specific pre-commit (prek) hooks (nixfmt).
 - **markdown-hooks**: Markdown-specific pre-commit (prek) hooks (markdownlint).
 - **local-hooks**: Auto-installs git hooks via pre-commit in local repositories (fail-safe).
-- **claude-md-sync-hooks**: Syncs CLAUDE.md files to AGENTS.md via symlinks for Claude/OpenCode collaboration.
+- **claude-md-sync-hooks**: Keeps every AGENTS.md readable by Claude Code, which reads it natively unless a root CLAUDE.md is present.
 
 ## How to use
 
@@ -122,12 +122,11 @@ devenv shell
 
 ### CLAUDE.md Sync Hooks Testing
 
-Test the `claude-md-sync-hooks` module which syncs `CLAUDE.md` files to `AGENTS.md` via symlinks:
+Test the `claude-md-sync-hooks` module against throwaway git repos (five cases,
+no devenv shell needed):
 
 ```bash
-cd test-project/claude-md-sync
-devenv shell
-./test-sync.sh
+./test-project/claude-md-sync/test-sync.sh
 ```
 
 ## License
@@ -159,17 +158,24 @@ This enables Claude/OpenCode collaboration in any Git project, regardless of bui
 
 ## CLAUDE.md Sync Module
 
-The `claude-md-sync-hooks` module enables seamless collaboration between Claude and OpenCode users.
+The `claude-md-sync-hooks` module keeps `AGENTS.md` the single instruction
+source for every agent. Claude Code reads `AGENTS.md` natively since 2.1.277,
+but only as a fallback: a root `CLAUDE.md` (or `.claude/CLAUDE.md`) switches
+that fallback off for the whole tree, and a real `CLAUDE.md` beside an
+`AGENTS.md` hides it unless it is a symlink or opens with `@AGENTS.md`.
 
 ### Architecture
 
 ```text
-AGENTS.md  = SOURCE FILE (edited by OpenCode users)
+AGENTS.md  = SOURCE FILE (read by every agent)
    ↑
-   └── CLAUDE.md (symlink → AGENTS.md, for Claude users)
+   └── CLAUDE.md (only where needed: symlink → AGENTS.md,
+                  or a real file opening with @AGENTS.md
+                  when Claude-only rules follow the import)
 ```
 
-**Key principle:** `AGENTS.md` is always the regular file. `CLAUDE.md` is always a symlink.
+**Key principle:** without a root `CLAUDE.md` no companion is created at all;
+with one, every `AGENTS.md` gets a symlink.
 
 ### Usage
 
@@ -184,10 +190,11 @@ AGENTS.md  = SOURCE FILE (edited by OpenCode users)
 
 **Features:**
 
-- Pre-commit hook syncs before every commit
-- Automatic sync on shell entry
-- Creates `AGENTS.md` if missing (with default template)
-- Converts existing `CLAUDE.md` files to `AGENTS.md` + symlink
+- Pre-commit hook checks before every commit, non-zero on any change
+- Creates a `CLAUDE.md` symlink only where the repo root has a `CLAUDE.md`
+- Accepts a real `CLAUDE.md` that opens with `@AGENTS.md`
+- Repairs drift: a copy of `AGENTS.md` becomes a symlink, a diverged
+  `CLAUDE.md` is merged into `AGENTS.md` first and flagged for review
 
 ### Usage in Non-Nix Projects
 

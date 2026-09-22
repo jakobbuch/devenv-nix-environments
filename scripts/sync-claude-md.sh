@@ -1,179 +1,87 @@
 #!/usr/bin/env bash
+# sync-claude-md.sh - keep every AGENTS.md readable by Claude Code.
+#
+# AGENTS.md is the single instruction source. Claude Code reads it natively
+# since 2.1.277, but only as a fallback: a CLAUDE.md (or .claude/CLAUDE.md) at
+# the repo root switches the fallback off for the whole tree, and a real
+# CLAUDE.md beside an AGENTS.md hides that file unless it is a symlink to it or
+# opens with the "@AGENTS.md" import. Hence the invariant:
+#
+#   - no root CLAUDE.md: no companion is required; one that exists must be a
+#     symlink or open with @AGENTS.md (Claude-only lines may follow);
+#   - a root CLAUDE.md: every AGENTS.md gets a companion, created as a symlink.
+#
+# Drift is repaired: a copy of AGENTS.md becomes a symlink, a diverged
+# CLAUDE.md is merged into AGENTS.md first. Any change exits non-zero so the
+# author re-stages and reviews.
+#
+# Usage: ./sync-claude-md.sh [/path/to/repo]
+
 set -euo pipefail
 
-# sync-claude-md.sh - Sync CLAUDE.md and AGENTS.md for Claude/OpenCode collaboration
-#
-# AGENTS.md is the SOURCE file (for OpenCode users)
-# CLAUDE.md is a SYMLINK to AGENTS.md (for Claude users)
-#
-# This script ensures:
-# - AGENTS.md always exists as a regular file
-# - CLAUDE.md is always a symlink to AGENTS.md
-# - If only CLAUDE.md exists (as file), convert to AGENTS.md + symlink
-# - If neither exists, create AGENTS.md with default template + symlink
-#
-# Usage:
-#   ./sync-claude-md.sh              # Run in current directory
-#   ./sync-claude-md.sh /path/to/repo # Run in specified directory
+cd "${1:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 
-REPO_ROOT="${1:-$(pwd)}"
+changed=0
+review=0
 
-cd "$REPO_ROOT"
+link() { # $1 = directory
+  ln -s AGENTS.md "$1/CLAUDE.md"
+  echo "linked $1/CLAUDE.md -> AGENTS.md"
+  changed=1
+}
 
-echo "🔄 Syncing CLAUDE.md and AGENTS.md for collaboration..."
-echo "   AGENTS.md = source file (OpenCode)"
-echo "   CLAUDE.md = symlink to AGENTS.md (Claude)"
-echo ""
-
-# Find all directories containing CLAUDE.md or AGENTS.md files (tracked or untracked)
-dirs_to_sync=()
-
-# Find directories with CLAUDE.md (tracked)
-while IFS= read -r file; do
-  dir=$(dirname "$file")
-  if [[ ! " ${dirs_to_sync[*]} " =~ ${dir} ]]; then
-    dirs_to_sync+=("$dir")
-  fi
-done < <(git ls-files 2>/dev/null | grep -E '(^|/)CLAUDE\.md$' || true)
-
-# Find directories with AGENTS.md (tracked)
-while IFS= read -r file; do
-  dir=$(dirname "$file")
-  if [[ ! " ${dirs_to_sync[*]} " =~ ${dir} ]]; then
-    dirs_to_sync+=("$dir")
-  fi
-done < <(git ls-files 2>/dev/null | grep -E '(^|/)AGENTS\.md$' || true)
-
-# Also check for untracked files in root
-if [ -f "CLAUDE.md" ] && [[ ! " ${dirs_to_sync[*]} " =~ . ]]; then
-  dirs_to_sync+=(".")
-fi
-if [ -f "AGENTS.md" ] && [[ ! " ${dirs_to_sync[*]} " =~ . ]]; then
-  dirs_to_sync+=(".")
+# A root CLAUDE.md (real file or symlink) disables the native fallback, so
+# every AGENTS.md below it then needs its own companion.
+require_companion=0
+if [ -e CLAUDE.md ] || [ -L CLAUDE.md ] || [ -e .claude/CLAUDE.md ]; then
+  require_companion=1
 fi
 
-# If no files found at all, create root-level AGENTS.md
-if [ ${#dirs_to_sync[@]} -eq 0 ]; then
-  echo "📄 No CLAUDE.md or AGENTS.md files found. Creating root-level files..."
-  
-  if [ ! -f "AGENTS.md" ]; then
-    # Create default AGENTS.md
-    cat > AGENTS.md << 'TEMPLATE'
-# AGENTS.md
+dirs=$(git ls-files --cached --others --exclude-standard 2>/dev/null |
+  grep -E '(^|/)(AGENTS|CLAUDE)\.md$' |
+  grep -vE '(^|/)(node_modules|\.venv|\.git)/' |
+  xargs -r -n1 dirname | sort -u || true)
 
-Project guidelines and context for AI assistants (OpenCode, Claude, etc.).
+for dir in $dirs; do
+  agents="$dir/AGENTS.md"
+  claude="$dir/CLAUDE.md"
 
-## Project Overview
+  # A lone CLAUDE.md (no AGENTS.md beside it, .claude/CLAUDE.md included) is
+  # the author's own file; nothing here may rewrite it.
+  [ -f "$agents" ] || continue
 
-<!-- Describe your project here -->
-
-## Development Guidelines
-
-<!-- Add coding standards, architecture notes, etc. -->
-
-## Important Files
-
-<!-- List key files and their purposes -->
-TEMPLATE
-    echo "  ✅ Created: AGENTS.md (default template)"
+  if [ -L "$claude" ]; then
+    [ "$(readlink "$claude")" = "AGENTS.md" ] && continue
+    rm "$claude"
+    link "$dir"
+    continue
   fi
-  
-  # Create CLAUDE.md symlink to AGENTS.md
-  if [ -L "CLAUDE.md" ]; then
-    target=$(readlink "CLAUDE.md")
-    if [ "$target" != "AGENTS.md" ]; then
-      rm "CLAUDE.md"
-      ln -s "AGENTS.md" "CLAUDE.md"
-      echo "  ✅ Fixed: CLAUDE.md -> AGENTS.md"
-    else
-      echo "  ✅ CLAUDE.md -> AGENTS.md (already correct)"
-    fi
-  elif [ -f "CLAUDE.md" ]; then
-    # CLAUDE.md is a regular file, replace with symlink
-    rm "CLAUDE.md"
-    ln -s "AGENTS.md" "CLAUDE.md"
-    echo "  ✅ Replaced: CLAUDE.md -> AGENTS.md"
-  else
-    ln -s "AGENTS.md" "CLAUDE.md"
-    echo "  ✅ Created: CLAUDE.md -> AGENTS.md"
-  fi
-  
-  echo "✅ Sync complete!"
-  exit 0
-fi
 
-echo "📄 Found ${#dirs_to_sync[@]} director(ies) to sync:"
+  if [ ! -e "$claude" ]; then
+    [ "$require_companion" = 1 ] && link "$dir"
+    continue
+  fi
 
-for dir in "${dirs_to_sync[@]}"; do
-  claude_file="$dir/CLAUDE.md"
-  agents_file="$dir/AGENTS.md"
-  
-  echo "  Processing: $dir"
-  
-  # Case 1: AGENTS.md exists as regular file (correct state)
-  if [ -f "$agents_file" ] && [ ! -L "$agents_file" ]; then
-    if [ -L "$claude_file" ]; then
-      target=$(readlink "$claude_file")
-      if [ "$target" = "AGENTS.md" ]; then
-        echo "    ✅ CLAUDE.md -> AGENTS.md (already synced)"
-      else
-        rm "$claude_file"
-        ln -s "AGENTS.md" "$claude_file"
-        echo "    ✅ Fixed: CLAUDE.md -> AGENTS.md"
-      fi
-    elif [ -f "$claude_file" ]; then
-      # CLAUDE.md is regular file, replace with symlink
-      rm "$claude_file"
-      ln -s "AGENTS.md" "$claude_file"
-      echo "    ✅ Replaced: CLAUDE.md -> AGENTS.md"
-    else
-      # CLAUDE.md doesn't exist
-      ln -s "AGENTS.md" "$claude_file"
-      echo "    ✅ Created: CLAUDE.md -> AGENTS.md"
-    fi
+  # First non-blank line is the import: Claude-only rules may follow it.
+  first=$(sed -n '/[^[:space:]]/{s/^[[:space:]]*//;s/[[:space:]]*$//;p;q}' "$claude")
+  [ "$first" = "@AGENTS.md" ] && continue
+
+  if [ "$(cat "$claude")" = "$(cat "$agents")" ]; then
+    rm "$claude"
+    link "$dir"
+    continue
   fi
-  
-  # Case 2: CLAUDE.md exists as regular file, AGENTS.md doesn't exist
-  if [ -f "$claude_file" ] && [ ! -L "$claude_file" ] && [ ! -e "$agents_file" ]; then
-    # Move CLAUDE.md content to AGENTS.md
-    mv "$claude_file" "$agents_file"
-    echo "    ✅ Created: AGENTS.md (from CLAUDE.md)"
-    
-    # Create CLAUDE.md symlink
-    ln -s "AGENTS.md" "$claude_file"
-    echo "    ✅ Created: CLAUDE.md -> AGENTS.md"
-  fi
-  
-  # Case 3: CLAUDE.md is symlink to wrong target
-  if [ -L "$claude_file" ]; then
-    target=$(readlink "$claude_file")
-    if [ "$target" != "AGENTS.md" ]; then
-      rm "$claude_file"
-      ln -s "AGENTS.md" "$claude_file"
-      echo "    ✅ Fixed: CLAUDE.md -> AGENTS.md (was -> $target)"
-    fi
-  fi
-  
-  # Case 4: AGENTS.md is symlink (wrong! should be regular file)
-  if [ -L "$agents_file" ]; then
-    target=$(readlink "$agents_file")
-    if [ -f "$dir/$target" ]; then
-      # Replace AGENTS.md symlink with actual file
-      cp "$dir/$target" "$agents_file.tmp"
-      rm "$agents_file"
-      mv "$agents_file.tmp" "$agents_file"
-      echo "    ✅ Converted: AGENTS.md (was symlink, now file)"
-      
-      # Fix CLAUDE.md symlink
-      if [ -L "$claude_file" ]; then
-        rm "$claude_file"
-      elif [ -f "$claude_file" ]; then
-        rm "$claude_file"
-      fi
-      ln -s "AGENTS.md" "$claude_file"
-      echo "    ✅ Fixed: CLAUDE.md -> AGENTS.md"
-    fi
-  fi
+
+  printf '\n## Merged from CLAUDE.md (%s)\n\n' "$(date +%F)" >>"$agents"
+  cat "$claude" >>"$agents"
+  rm "$claude"
+  link "$dir"
+  echo "REVIEW: $claude had diverged; its content was appended to $agents" >&2
+  review=1
 done
 
-echo "✅ Sync complete!"
+if [ "$changed" = 1 ] || [ "$review" = 1 ]; then
+  echo "AGENTS.md/CLAUDE.md links changed. Re-stage the files and commit again." >&2
+  exit 1
+fi
+exit 0
