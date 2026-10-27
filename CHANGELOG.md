@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- *(repo-hygiene-hooks)* Add opt-in hooks no-tracked-secrets, kernel-device-names, nix-gotchas and claude-permissions
 - *(markdown)* Enable --fix for markdownlint git hook
 - Add local-hooks module for fail-safe git hooks installation
 

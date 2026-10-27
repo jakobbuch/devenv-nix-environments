@@ -48,6 +48,7 @@
         markdown-hooks = ./devenv/markdown-hooks-dev.nix;
         local-hooks = ./devenv/local-hooks-dev.nix;
         claude-md-sync-hooks = ./devenv/claude-md-sync-hooks-dev.nix;
+        repo-hygiene-hooks = ./devenv/repo-hygiene-hooks-dev.nix;
       };
 
       devShells = forAllSystems (

@@ -18,6 +18,7 @@ The following modules are available under the `devenvModules` output:
 - **markdown-hooks**: Markdown-specific pre-commit (prek) hooks (markdownlint).
 - **local-hooks**: Auto-installs git hooks via pre-commit in local repositories (fail-safe).
 - **claude-md-sync-hooks**: Keeps every AGENTS.md readable by Claude Code, which reads it natively unless a root CLAUDE.md is present.
+- **repo-hygiene-hooks**: Opt-in grep-based hooks: no-tracked-secrets, kernel-device-names, nix-gotchas, claude-permissions.
 
 ## How to use
 
@@ -195,6 +196,38 @@ with one, every `AGENTS.md` gets a symlink.
 - Accepts a real `CLAUDE.md` that opens with `@AGENTS.md`
 - Repairs drift: a copy of `AGENTS.md` becomes a symlink, a diverged
   `CLAUDE.md` is merged into `AGENTS.md` first and flagged for review
+
+## Repo Hygiene Hooks
+
+The `repo-hygiene-hooks` module bundles four grep-based hooks, each off until
+enabled. Scripts live in `scripts/check-*.sh` and are inlined into the hooks.
+
+```nix
+# devenv.nix
+{ inputs, ... }: {
+  imports = [ inputs.devenv-modules.devenvModules.repo-hygiene-hooks ];
+  repoHygiene = {
+    noTrackedSecrets.enable = true;
+    kernelDeviceNames.enable = true;
+    nixGotchas.enable = true;
+    claudePermissions.enable = true;
+  };
+}
+```
+
+| Option (`repoHygiene.`)                | Default                    | Purpose                                             |
+| -------------------------------------- | -------------------------- | --------------------------------------------------- |
+| `noTrackedSecrets.enable`              | `false`                    | Block credentials in tracked text files             |
+| `noTrackedSecrets.placeholderRegex`    | `SECRET_TOKEN_*` etc.      | ERE for values that are not secrets                 |
+| `noTrackedSecrets.excludeRegex`        | `^$`                       | Paths never checked                                 |
+| `kernelDeviceNames.enable`             | `false`                    | Flag `nvmeXnY` / `/dev/sdX`                         |
+| `kernelDeviceNames.files`              | `""` (all text files)      | Hook file filter                                    |
+| `kernelDeviceNames.excludeRegex`       | `^$`                       | Paths never checked                                 |
+| `nixGotchas.enable`                    | `false`                    | `writeShellScriptBin` without `/bin/x`, `#` in `\` |
+| `nixGotchas.flakePathChecks`           | `false`                    | `self.outPath`, hardcoded `~/.config/nixos`         |
+| `nixGotchas.stateVersionInHostsOnly`   | `false`                    | `stateVersion` only under `hosts/`                  |
+| `claudePermissions.enable`             | `false`                    | No `*` before the tail of `permissions.allow` rules |
+| `claudePermissions.settingsFiles`      | `[".claude/settings.json"]`| Settings files to check                             |
 
 ### Usage in Non-Nix Projects
 
