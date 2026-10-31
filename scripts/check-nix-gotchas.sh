@@ -5,7 +5,8 @@
 #   3. self.outPath in .nix                   (only with GOTCHAS_FLAKE_PATH=1)
 #   4. a hardcoded /home/<user>/.config/nixos path in .nix (only with GOTCHAS_FLAKE_PATH=1)
 #   5. a `#` comment line right after a line ending in `\` (breaks the command)
-# Checks 1 and 5 always run; 2-4 are specific to one flake layout and default off.
+#   6. a hardcoded WAYLAND_DISPLAY=wayland-<n> (the socket number differs per session)
+# Checks 1, 5 and 6 always run; 2-4 are specific to one flake layout and default off.
 # Deliberate exception: put `gotcha-ok: <reason>` in a comment on the flagged line.
 # Usage: check-nix-gotchas.sh FILE... | check-nix-gotchas.sh --all (every tracked file)
 set -uo pipefail
@@ -72,6 +73,8 @@ for file in "$@"; do
           if (fp == 1 && l ~ /\/home\/[^ \/"]+\/\.config\/nixos/)
             flag(i, "hardcoded flake path; use flakePath from specialArgs")
         }
+        if (!ok && l !~ /^[[:space:]]*#/ && l ~ /WAYLAND_DISPLAY[[:space:]]*=[[:space:]]*"?wayland-[0-9]/)
+          flag(i, "hardcoded WAYLAND_DISPLAY; inherit it from the session (systemd user manager) instead")
         if (!ok && i < NR && l !~ /^[[:space:]]*#/ && l ~ /\\[[:space:]]*$/ && line[i + 1] ~ /^[[:space:]]*#/)
           flag(i + 1, "comment line inside a `\\`-continued command")
       }
