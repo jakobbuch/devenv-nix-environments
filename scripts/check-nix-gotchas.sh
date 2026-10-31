@@ -73,7 +73,7 @@ for file in "$@"; do
           if (fp == 1 && l ~ /\/home\/[^ \/"]+\/\.config\/nixos/)
             flag(i, "hardcoded flake path; use flakePath from specialArgs")
         }
-        if (!ok && l !~ /^[[:space:]]*#/ && l ~ /WAYLAND_DISPLAY[[:space:]]*=[[:space:]]*"?wayland-[0-9]/)
+        if (!ok && l !~ /^[[:space:]]*#/ && l ~ /WAYLAND_DISPLAY[[:space:]]*=[[:space:]]*["\047]?wayland-[0-9]/)
           flag(i, "hardcoded WAYLAND_DISPLAY; inherit it from the session (systemd user manager) instead")
         if (!ok && i < NR && l !~ /^[[:space:]]*#/ && l ~ /\\[[:space:]]*$/ && line[i + 1] ~ /^[[:space:]]*#/)
           flag(i + 1, "comment line inside a `\\`-continued command")
