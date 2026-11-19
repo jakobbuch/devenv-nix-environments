@@ -15,7 +15,9 @@ The following modules are available under the `devenvModules` output:
 - **git-hooks**: Base git-hooks configuration.
 - **python-hooks**: Python-specific pre-commit (prek) hooks (ruff).
 - **nix-hooks**: Nix-specific pre-commit (prek) hooks (nixfmt).
-- **markdown-hooks**: Markdown-specific pre-commit (prek) hooks (markdownlint).
+- **markdown-hooks**: Markdown-specific pre-commit (prek) hooks (markdownlint). The hook only reports (no
+  `--fix`); to fix, run `markdownlint --fix -c <config>` with the config path from the generated hook's `entry`.
+  Bare `markdownlint` uses its own defaults (an 80-column MD013) instead of this module's config.
 - **local-hooks**: Auto-installs git hooks via pre-commit in local repositories (fail-safe).
 - **claude-md-sync-hooks**: Keeps every AGENTS.md readable by Claude Code, which reads it natively unless a root CLAUDE.md is present.
 - **repo-hygiene-hooks**: Opt-in grep-based hooks: no-tracked-secrets, kernel-device-names, nix-gotchas, claude-permissions.
